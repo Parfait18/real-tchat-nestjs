@@ -1,35 +1,41 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
 
+/**
+ * Recent history of each room. Redis is the read path: a client joining a room gets the last
+ * hundred messages from here, never from Postgres.
+ */
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(RedisService.name);
   private client: RedisClientType;
 
-  constructor() {
-    this.client = createClient({
-      url: 'redis://localhost:6379'
-    });
+  constructor(private readonly configService: ConfigService) {}
 
-    this.client.on('error', (err) => console.error('Redis Client Error', err));
-  }
+  async onModuleInit(): Promise<void> {
+    const host = this.configService.get<string>('app.redis.host');
+    const port = this.configService.get<number>('app.redis.port');
 
-  async onModuleInit() {
+    this.client = createClient({ url: `redis://${host}:${port}` });
+    this.client.on('error', (error) => this.logger.error('redis client error', error));
+
     await this.client.connect();
   }
 
-  async onModuleDestroy() {
-    await this.client.quit();
+  async onModuleDestroy(): Promise<void> {
+    await this.client?.quit();
   }
 
   async lpush(key: string, value: string): Promise<number> {
-    return await this.client.lPush(key, value);
+    return this.client.lPush(key, value);
   }
 
   async ltrim(key: string, start: number, stop: number): Promise<string> {
-    return await this.client.lTrim(key, start, stop);
+    return this.client.lTrim(key, start, stop);
   }
 
   async lrange(key: string, start: number, stop: number): Promise<string[]> {
-    return await this.client.lRange(key, start, stop);
+    return this.client.lRange(key, start, stop);
   }
 }

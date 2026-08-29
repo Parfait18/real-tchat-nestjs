@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Message } from '../chat/entities/message.entity';
 
 @Module({
   imports: [
@@ -8,16 +9,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('app.database.host'),
-        port: configService.get('app.database.port'),
-        username: configService.get('app.database.username'),
-        password: configService.get('app.database.password'),
-        database: configService.get('app.database.database'),
-        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: false,
-        migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-        migrationsRun: true,
+        type: 'postgres' as const,
+        host: configService.get<string>('app.database.host'),
+        port: configService.get<number>('app.database.port'),
+        username: configService.get<string>('app.database.username'),
+        password: configService.get<string>('app.database.password'),
+        database: configService.get<string>('app.database.database'),
+        entities: [Message],
+        // Off by default. Convenient locally, never acceptable against a real database.
+        synchronize: configService.get<boolean>('app.database.synchronize'),
       }),
     }),
   ],

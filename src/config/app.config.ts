@@ -15,14 +15,6 @@ export default registerAs('app', () => ({
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_NAME || 'chat_app',
-  },
-  email: {
-    sendgridApiKey: process.env.SENDGRID_API_KEY,
-    fromEmail: process.env.FROM_EMAIL || 'noreply@chatapp.com',
-  },
-  sms: {
-    twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
-    twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
-    twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER,
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
   },
 }));
